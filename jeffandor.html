@@ -1,14 +1,75 @@
 <head>
-  <title>jeffandor</title>
-</head>
+  <title>Jeff and Or's Save the Date</title>
+<link href='https://fonts.googleapis.com/css?family=Poiret+One|PT+Sans|Montserrat|Spinnaker' rel='stylesheet' type='text/css'></head>
 
 <body>
-  <h1>Welcome to Meteor!</h1>
+  <header class="header">
+    <span>Save the Date</span><br/>
+    <div class="subheader">
+      <span>July 3, 2016</span><img src="rings.png"/><span>Seattle, WA</span>
+    </div>
+  </header>
+  <div class="container">
+    <div class="pretty-photo">
+      <img src="DSC_6838-2.jpg">
+    </div>
+    <div class="addressForm">
+      <div class="thanks" hidden=true>
+      Thank you! Expect an invitation eventually.
+      </div>
+      <div class="addressRequest" hidden=true>
+          Please give us your address so that we can mail you an invitation!
+        {{> addressEntry}}
+      </div>
+      <div class="manualAddressRequest">
+          Please give us your address so that we can mail you an invitation!
+        {{> manualAddressEntry}}
+      </div>
+      <div class="havingTrouble" hidden=true>
+        {{helperText}}
+      </div>
+    </div>
+    <div class="married">
+      <div class="name left">
+        Jeff<span>Coonen</span>
+      </div>
+      <div class="ampersand">&amp;</div>
+      <div class="name right">
+        Or<span>Sagie</span>
+      </div>
+    </div>
+    <div class="copyright">
+      Photo by Chris Russell
+    </div>
+  </div>
+  <footer class="footer">
+    <span>More information coming soon...</span>
+  </footer>
 
-  {{> hello}}
 </body>
 
-<template name="hello">
-  <button>Click Me</button>
-  <p>You've pressed the button {{counter}} times.</p>
+
+<template name="addressEntry">
+  <form class="entryform">
+    <input id="person_name" class="name" type="text" name="person_name" placeholder="Name" required/> <br/>
+    <input id="email" type="text" name="email" class="email" placeholder="Email" required/> <br/>
+    <input id="autocomp" class="autocomp" type="text" name="autocomp" placeholder="Full address" required/> <br/>
+    <input id="fulladdr" type="hidden" name="formatted_address" required/>
+    <input id="line2" type="text" name="line2" placeholder="Unit #"/> <br/>
+    <input id="submit" class="submit" type="submit" value="Submit"/>
+  </form>
+</template>
+
+<template name="manualAddressEntry">
+  <form class="manualentryform">
+    <input id="manual_person_name" class="name" type="text" name="person_name" placeholder="Name" required/> <br/>
+    <input id="manual_email" class="email" type="text" name="email" placeholder="Email" required/> <br/>
+    <input id="manual_line1" type="text" class="left line_1" name="address_line_1" placeholder="Street address" required/>
+    <input id="manual_line2" type="text" class="right line_2" name="address_line_2" placeholder="Unit #" /> <br/>
+    <input id="manual_city" type="text" class="left city" name="city" placeholder="City" required/>
+    <input id="manual_state" type="text" class="right state" name="state" placeholder="State"/><br/>
+    <input id="manual_zip" type="text" class="left zip" name="zip" placeholder="ZIP" required/>
+    <input id="manual_country" type="text" class="right coutry" name="country" placeholder="Country" required/> <br/>
+    <input id="manual_submit" class="submit" type="submit" value="Submit"/> <br/>
+  </form>
 </template>
