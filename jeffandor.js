@@ -1,105 +1,64 @@
-helperTextOptions = {
-  goManual:"Google can't find your address? Click here to enter an address manually.",
-  goAutomatic:"Click here to try automatic address selection."
-};
-
-Addresses = new Mongo.Collection("addresses");
-
-function showThanks () {
-  $('.manualAddressRequest').hide();
-  $('.addressRequest').hide();
-  $('.havingTrouble').hide();
-  $('.thanks').fadeIn();
-};
+RSVPs = new Mongo.Collection("rsvps");
 
 if (Meteor.isClient) {
+  
+  Template.rsvpEntry.events({
+    "submit .rsvp-form": function (event) {
+      event.preventDefault();
 
-  Session.setDefault('helperText', helperTextOptions.goAutomatic);
+       var  rsvpFormFieldNames = ['name', 'email', 'guest_list', 'attending_wedding', 'message'],
+            rsvpObject = {},
+            emailre = /\S+@\S+\.\S+/,
+            error = false,
+            attending = false;
 
-  Template.body.events({
-    "click .havingTrouble": function () {
-      if(Session.get('helperText') == helperTextOptions.goManual) {
-        $('.addressRequest').hide();
-        $('.manualAddressRequest').show();
-        Session.set('helperText', helperTextOptions.goAutomatic);
+      rsvpFormFieldNames.forEach(function (fieldName) {
+        var $fields = $('.'+fieldName);
+
+        $fields.each(function() {
+          var $field = $(this),
+              val = $field.val().trim(),
+              add = false;
+
+          if ($field.hasClass('required') && val === "") {
+            $field.addClass('invalid');
+            error = true;
+          } else if (fieldName === "email" && val !== "" && emailre.test(val) === false) {
+              $field.addClass('invalid');
+              error = true;
+          } else {
+            if ($field.is('button')) {
+              if ($field.hasClass('active')) {
+                val = $field.data().value;
+                add = true;
+                attending = true;
+              }
+            } else {
+              add = true;
+            }
+          }
+
+          if (add) {
+            if (rsvpObject[fieldName] !== undefined) {
+              rsvpObject[fieldName] += ',' + val;
+            } else {
+              rsvpObject[fieldName] = val;
+            }
+          }
+        });
+      });
+
+      if (error) {
+        Meteor.call('showError', 'Missing name or email');
+        return false;
+      }
+
+      Meteor.call('addRsvpEntry', rsvpObject);
+      if(attending) {
+        Meteor.call('showSuccess', 'See you there!!!');
       } else {
-        $('.addressRequest').show();
-        $('.manualAddressRequest').hide();
-        Session.set('helperText', helperTextOptions.goManual);
+        Meteor.call('showSuccess', 'Sorry you can\'t make it :(');
       }
-    }
-  });
-
-  Template.body.helpers({
-    helperText: function() {
-      return Session.get('helperText');
-    }
-  })
-
-  Template.addressEntry.events({
-    "submit .entryform": function (event) {
-      //console.log(event);
-      event.preventDefault();
-
-      var name = event.target.person_name.value.trim();
-      var email = event.target.email.value.trim();
-      var address = event.target.fulladdr.value.trim();
-      var line2 = event.target.line2.value.trim();
-
-      var addressObject = {
-        name: name,
-        email: email,
-        address: address,
-        line2: line2
-      }
-
-      //console.log(addressObject);
-      Meteor.call("addAddressEntry", addressObject);
-
-      event.target.person_name.value = "";
-      event.target.email.value = "";
-      event.target.fulladdr.value = "";
-      event.target.line2.value = "";
-      showThanks();
-    }
-  });
-
-  Template.manualAddressEntry.events({
-    "submit .manualentryform": function (event) {
-      //console.log(event);
-      event.preventDefault();
-
-      var name = event.target.manual_person_name.value.trim();
-      var email = event.target.manual_email.value.trim();
-      var line1 = event.target.manual_line1.value.trim();
-      var line2 = event.target.manual_line2.value.trim();
-      var city = event.target.manual_city.value.trim();
-      var state = event.target.manual_state.value.trim();
-      var zip = event.target.manual_zip.value.trim();
-      var country = event.target.manual_country.value.trim();
-
-      var fulladdress = line1 + ', ' + city + ", " + state + " " + zip + ", " + country;
-
-      var addressObject = {
-        name: name,
-        email: email,
-        address: fulladdress,
-        line2: line2
-      }
-
-      //console.log(addressObject);
-
-      Meteor.call("addAddressEntry", addressObject);
-
-      event.target.manual_person_name.value = "";
-      event.target.manual_email.value = "";
-      event.target.manual_line1.value = "";
-      event.target.manual_line2.value = "";
-      event.target.manual_city.value = "";
-      event.target.manual_state.value = "";
-      event.target.manual_zip.value = "";
-      event.target.manual_country.value = "";
-      showThanks();
     }
   });
 }
@@ -111,13 +70,50 @@ if (Meteor.isServer) {
 }
 
 Meteor.methods({
-  addAddressEntry: function (addressObject) {
-    Addresses.insert({
-      name: addressObject["name"],
-      email: addressObject["email"],
-      address: addressObject["address"],
-      line2: addressObject["line2"],
-      cratedAt: new Date()
+  addRsvpEntry: function (rsvpObject) {
+    RSVPs.insert(rsvpObject);
+  },
+  showError: function (contact_form_error_msg) {
+    var $submit_btn = $('.submit_form');
+    $submit_btn.width($submit_btn.width());
+
+    $('i', $submit_btn).each(function () {
+        var $icon = $(this),
+            iClass = $icon.attr("class");
+
+        $icon.removeClass(iClass).addClass('fa fa-times').delay(1500).queue(function (next) {
+            $(this).removeClass('fa fa-times').addClass(iClass);
+            next();
+        });
     });
+
+    $submit_btn.addClass('btn-danger').delay(1500).queue(function (next) {
+        $(this).removeClass('btn-danger');
+        next();
+    });
+
+    $(".form_status_message").html('<div class="alert alert-danger alert-dismissible" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + contact_form_error_msg + '</div>');
+  },
+  showSuccess: function (contact_form_success_msg) {
+    var $submit_btn = $('.submit_form');
+
+    $submit_btn.width($submit_btn.width());
+
+    $('i', $submit_btn).each(function () {
+        var $icon = $(this),
+            iClass = $icon.attr("class");
+
+        $icon.removeClass(iClass).addClass('fa fa-check').delay(1500).queue(function (next) {
+            $(this).removeClass('fa fa-check').addClass(iClass);
+            next();
+        });
+    });
+
+    $submit_btn.addClass('btn-success').delay(1500).queue(function (next) {
+        $(this).removeClass('btn-success');
+        next();
+    });
+
+    $(".form_status_message").html('<div class="alert alert-success alert-dismissible" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + contact_form_success_msg + '</div>');
   }
 })
